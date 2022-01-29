@@ -15,9 +15,10 @@ const canvas = document.querySelector('canvas.webgl')
 
 import vertexShader from './shaders/vertex.glsl'
 import fragmentShader from './shaders/fragment.glsl'
+import fragmentShaderFloor from './shaders/fragment-floor.glsl'
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color( 0xffffff )
+// scene.background = new THREE.Color( 0xffffff )
 const loadingBarElement = document.querySelector('.loading-bar')
 const loadingBarText = document.querySelector('.loading-bar-text')
 const loadingManager = new THREE.LoadingManager(
@@ -117,8 +118,51 @@ const shaderMaterial = new THREE.ShaderMaterial({
   }
 })
 
+const floorMaterial = new THREE.ShaderMaterial({
+  vertexShader: vertexShader,
+  fragmentShader: fragmentShaderFloor,
+  transparent: true,
+  depthWrite: true,
+  clipShadows: true,
+  wireframe: false,
+  side: THREE.DoubleSide,
+  uniforms: {
+    uFrequency: {
+      value: new THREE.Vector2(10, 5)
+    },
+    uTime: {
+      value: 0
+    },
 
-let sceneGroup, mixer, gltfVar, egg, bit, shell
+    uResolution: { type: 'v2', value: new THREE.Vector2() },
+    uPosition: {
+      value: {
+        x: 0
+      }
+    },
+    uRotation: {
+      value: 0
+
+
+
+    },
+    uValueA: {
+      value: Math.random()
+    },
+    uValueB: {
+      value: Math.random()
+    },
+    uValueC: {
+      value: Math.random()
+    },
+    uValueD: {
+      value: Math.random()
+    }
+  }
+})
+
+
+let sceneGroup, mixer, gltfVar, egg, bit, shell, floor, segments
 gtlfLoader.load(
   'eggD.glb',
   (gltf) => {
@@ -129,10 +173,14 @@ gtlfLoader.load(
     sceneGroup.needsUpdate = true
     sceneGroup.position.y -= 3
     scene.add(sceneGroup)
-
+    segments = []
 
     egg = gltf.scene.children.find((child) => {
       return child.name === 'egg'
+    })
+
+    floor = gltf.scene.children.find((child) => {
+      return child.name === 'floor'
     })
 
     bit = gltf.scene.children.find((child) => {
@@ -141,20 +189,22 @@ gtlfLoader.load(
 
     console.log(bit)
 
+    floor.material = floorMaterial
+
     scene.traverse( function( object ) {
       // console.log(object)
-    if (object.material && object.material.name.includes('2')){
+      if (object.material && object.material.name.includes('2')){
+        segments.push(object)
+        object.material = shaderMaterial
+      }
 
-      object.material = shaderMaterial
-    }
+      if (object.material && object.material.name.includes('1')){
+        console.log('hiya')
+        shell = object.material
 
-    if (object.material && object.material.name.includes('1')){
-      console.log('hiya')
-      shell = object.material
+      }
 
-    }
-
-} );
+} )
 
 
   }
@@ -170,7 +220,7 @@ function onClick() {
   shaderMaterial.uniforms.uValueD.value = Math.random()
   event.preventDefault()
   egg.material = shell
-
+  // sceneGroup.rotation.y += .5
   // gsap.to(egg.position, { y: -6,  duration: 7.5 })
 
 
@@ -179,8 +229,8 @@ function onClick() {
     console.log(mixer)
     gltfVar.animations.map(x => {
       const action = mixer.clipAction(x)
-      action.clampWhenFinished = true;
-      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true
+      action.setLoop(THREE.LoopOnce, 1)
       action.play()
     })
 
@@ -191,37 +241,6 @@ function onClick() {
 }
 
 
-
-// gtlfLoader.load(
-//   'birds.glb',
-//   (gltf) => {
-//
-//     gltf.scene.scale.set(5.5,5.5,5.5)
-//     sceneGroup = gltf.scene
-//     sceneGroup.needsUpdate = true
-//     sceneGroup.position.z -= 15
-//     sceneGroup.position.y -= 3
-//     sceneGroup.position.x += 6
-//     scene.add(sceneGroup)
-//
-//     if(gltf.animations[0]){
-//       mixer = new THREE.AnimationMixer(gltf.scene)
-//
-//       const action2 = mixer.clipAction(gltf.animations[1])
-//
-//       action2.play()
-//
-//     }
-//
-//
-//   }
-// )
-
-
-// const light = new THREE.AmbientLight( 0x404040 )
-// scene.add( light )
-// const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 )
-// scene.add( directionalLight )
 
 const sizes = {
   width: window.innerWidth,
@@ -281,7 +300,7 @@ const mouse = new THREE.Vector2()
 
 const light = new THREE.AmbientLight( 0x404040 )
 scene.add( light )
-const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 )
+const directionalLight = new THREE.DirectionalLight( 0xffffff, 1.5 )
 scene.add( directionalLight )
 
 
@@ -306,23 +325,11 @@ const tick = () =>{
     }
   }
 
-  // fireMaterial.uniforms.uTime.value = elapsedTime
-  // fireMaterial.needsUpdate=true
-  // // window1Material.fragmentShader = fragArray[selectedArray[0]]
-  // //
-  // eyesMaterial.uniforms.uTime.value = elapsedTime
-  // eyesMaterial.needsUpdate=true
-  //
-  //
-  // screenMaterial.uniforms.uTime.value = elapsedTime
-  // screenMaterial.needsUpdate=true
-  //
-  //
-  // thoughtMaterial.uniforms.uTime.value = elapsedTime
-  // thoughtMaterial.needsUpdate=true
+
 
 
   shaderMaterial.uniforms.uTime.value = elapsedTime
+  floorMaterial.uniforms.uTime.value = elapsedTime
 
   // Render
   renderer.render(scene, camera)
