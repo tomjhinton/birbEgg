@@ -417,7 +417,7 @@ void main(){
   uv  = tile(uv, 20. );
   uv = rotateTilePattern(uv);
 
-  vec3 color = vec3(uv.x * uValueA);
+  vec3 color = vec3(uv.x *.2);
 
   color += cnoise(uv * 20. * uv.x);
 
