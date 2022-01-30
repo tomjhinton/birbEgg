@@ -323,6 +323,7 @@ const tick = () =>{
       egg.material = invisibleMaterial
 
     }
+    // sceneGroup.rotation.y +=.001
   }
 
 
